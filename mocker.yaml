@@ -1,0 +1,15 @@
+port: 8081
+routes:
+  "/ready":
+    get:
+      - response: OK
+  "/login":
+    post:
+      - conditions:
+        - header_eq "Authorization" "Basic dXNlcjpwYXNzd29yZA=="
+        response: '{"token": "9cc2398d499b689de63c73a910803fa07e192c8c"}'
+        headers:
+          "content-type": application/json
+      
+      - response: Unauthorized
+        code: 403
