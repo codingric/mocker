@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -90,13 +91,13 @@ func (r Routes) Handle(w http.ResponseWriter, req *http.Request) {
 		condition := true
 		if len(route.Conditions) > 0 {
 			tmp := fmt.Sprintf(`{{if and (%s)}}true{{else}}false{{end}}`, strings.Join(route.Conditions, ") ("))
-			condition = renderTemplate(tmp, req) == "true"
+			condition = render(tmp, req) == "true"
 		}
 		if condition {
 			if route.Code == 0 {
 				route.Code = 200
 			}
-			route.Response = renderTemplate(route.Response, req)
+			route.Response = render(route.Response, req)
 			body := route.Response
 			if len(route.Response) > 20 {
 				body = route.Response[:20] + "..."
@@ -122,16 +123,20 @@ func (r Routes) Handle(w http.ResponseWriter, req *http.Request) {
 	http.NotFound(w, req)
 }
 
-func renderTemplate(tmpl string, req *http.Request) string {
+func render(tmpl string, req *http.Request) string {
 	data := map[string]any{"Request": req}
 
 	t := template.New("hello")
+	body, _ := io.ReadAll(req.Body)
 	t.Funcs(template.FuncMap{
 		"toLower": func(target string) string {
 			return strings.ToLower(target)
 		},
-		"method": func(method string) bool {
-			return strings.EqualFold(req.Method, method)
+		"body_eq": func(content string) bool {
+			return strings.EqualFold(string(body), content)
+		},
+		"body_contains": func(content string) bool {
+			return strings.Contains(string(body), content)
 		},
 		"has_header": func(header string) bool {
 			_, ok := req.Header[header]
