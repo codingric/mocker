@@ -6,10 +6,25 @@ routes:
   "/login":
     post:
       - conditions:
-        - header_eq "Authorization" "Basic dXNlcjpwYXNzd29yZA=="
+        - .headers.authorization == "Basic dXNlcjpwYXNzd29yZA=="
         response: '{"token": "9cc2398d499b689de63c73a910803fa07e192c8c"}'
         headers:
           "content-type": application/json
-      
       - response: Unauthorized
         code: 403
+  "/users":
+    post:
+      - conditions:
+        - .json.id == 3
+        response: '{"id": ${.json.id}, "name": "${.headers."content-type"}"}'
+        headers:
+          "content-type": application/json
+      - response: '{"message": "user not found"}'
+        code: 404
+        headers:
+          "content-type": application/json
+  "/users/{id}":
+    get:
+      - response: '{"id": ${.params.id}, "name": "test"}'
+        headers:
+          "content-type": application/json
